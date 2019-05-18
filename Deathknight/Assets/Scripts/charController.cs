@@ -12,6 +12,7 @@ public class charController : MonoBehaviour
     CharacterController characterController;
 
     public float speed = 6.0f;
+    public float rotSpeed = 6.0f;
     public float jumpSpeed = 8.0f;
     public float gravity = 20.0f;
 
@@ -19,14 +20,17 @@ public class charController : MonoBehaviour
 
     
     private Vector3 moveDirection = Vector3.zero;
+    private Vector3 lookDirection;
 
     void Start()
     {
         characterController = GetComponent<CharacterController>();
+        lookDirection = Vector3.zero;
     }
 
     void Update()
     {
+        
         // If on the ground
         if (characterController.isGrounded)
         {
@@ -54,8 +58,12 @@ public class charController : MonoBehaviour
             }
             
         }
+        //Rotation
+        lookDirection += new Vector3(0, Input.GetAxis("Mouse X"), 0) * rotSpeed;
+        //lookDirection *= rotSpeed;
         //Gravity
         moveDirection.y -= gravity * Time.deltaTime;
+        transform.rotation = Quaternion.Euler(lookDirection);
         characterController.Move(moveDirection * Time.deltaTime);
     }
 }
