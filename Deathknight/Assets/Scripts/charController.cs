@@ -21,17 +21,22 @@ public class charController : MonoBehaviour
     
     private Vector3 moveDirection = Vector3.zero;
     private Vector3 lookDirection;
-
+    private RaycastHit hit;
+    private Vector3 lookTarget;
+    //Only layer 8
+    //int layer_mask = 1<<8;
+    int layer_mask;
     void Start()
     {
         characterController = GetComponent<CharacterController>();
-        lookDirection = Vector3.zero;
+        //lookDirection = Vector3.zero;
+        layer_mask = LayerMask.GetMask("Void Floor");
     }
 
     void Update()
     {
         
-        // If on the ground
+        //Movement (Only on ground)
         if (characterController.isGrounded)
         {
             //Get direction keys
@@ -43,7 +48,6 @@ public class charController : MonoBehaviour
             {
                 moveDirection.y = jumpSpeed;
             }
-            
         }
         //Crouch Behaviour
         if (Input.GetButtonDown("Crouch")) {
@@ -59,11 +63,27 @@ public class charController : MonoBehaviour
             
         }
         //Rotation
-        lookDirection += new Vector3(0, Input.GetAxis("Mouse X"), 0) * rotSpeed;
-        //lookDirection *= rotSpeed;
+        if(Input.GetButton("Fire2")) {
+            Ray mouseRay = Camera.main.ScreenPointToRay(Input.mousePosition);
+            if(Physics.Raycast(mouseRay, out hit, 100, layer_mask)) {
+                lookTarget = hit.point;
+                lookTarget.y = transform.position.y;
+                transform.LookAt(lookTarget);
+            }
+        } else {
+            lookTarget = moveDirection+transform.position;
+            lookTarget.y = transform.position.y;
+            transform.LookAt(lookTarget);
+        }
+        //transform.rotation = Quaternion.Euler(0, 0, 0);
+        
+        //lookDirection += new Vector3(0, Input.GetAxis("Mouse X"), 0) * rotSpeed;
+        //transform.rotation = Quaternion.Euler(lookDirection);
+        
         //Gravity
         moveDirection.y -= gravity * Time.deltaTime;
-        transform.rotation = Quaternion.Euler(lookDirection);
+        
+        //Apply Movement
         characterController.Move(moveDirection * Time.deltaTime);
     }
 }
