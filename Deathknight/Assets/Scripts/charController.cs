@@ -9,8 +9,10 @@ using System.Collections;
 
 public class charController : MonoBehaviour
 {
-    CharacterController characterController;
+    public Animator animator;
 
+    CharacterController characterController;
+    //char controller variables
     public float speed = 6.0f;
     public float rotSpeed = 6.0f;
     public float jumpSpeed = 8.0f;
@@ -23,9 +25,9 @@ public class charController : MonoBehaviour
     private Vector3 lookDirection;
     private RaycastHit hit;
     private Vector3 lookTarget;
-    //Only layer 8
-    //int layer_mask = 1<<8;
+    
     int layer_mask;
+
     void Start()
     {
         characterController = GetComponent<CharacterController>();
@@ -35,8 +37,8 @@ public class charController : MonoBehaviour
 
     void Update()
     {
-        
-        //Movement (Only on ground)
+//MOVING
+        // IF character isGrounded allow input of Movement and jumping, ELSE apply gravity
         if (characterController.isGrounded)
         {
             //Get direction keys
@@ -48,40 +50,53 @@ public class charController : MonoBehaviour
             {
                 moveDirection.y = jumpSpeed;
             }
+        } else {
+            //Apply Gravity to movedirection
+            moveDirection.y -= gravity * Time.deltaTime;
         }
-        //Crouch Behaviour
-        if (Input.GetButtonDown("Crouch")) {
-            if(sneaking) { //DISENGAGE SNEAK
+
+//CROUCHING
+        //Other inteded Behaviour that crouch makes it easier to stay on a moving creature or object
+        if (Input.GetButtonDown("Crouch")) { //If Crouch is pressed
+            if(sneaking) { //If We are already sneaking disable sneaking, ELSE enable sneaking
                 characterController.slopeLimit -= 20;
                 sneaking = false;
             speed *= 2;
-            } else { //ENGAGE SNEAK
+            } else {
                 characterController.slopeLimit += 20;
                 speed /= 2;
                 sneaking = true;
             }
-            
         }
-        //Rotation
-        if(Input.GetButton("Fire2")) {
-            Ray mouseRay = Camera.main.ScreenPointToRay(Input.mousePosition);
-            if(Physics.Raycast(mouseRay, out hit, 100, layer_mask)) {
-                lookTarget = hit.point;
-                lookTarget.y = transform.position.y;
-                transform.LookAt(lookTarget);
-            }
-        } else {
+
+//ROTATION
+        //REDO
+        // Behaves such that look in direction as default
+        
+        // If we are moving (Or other later determined triggers such as menus) Determine look from them
+        if(!Input.GetButton("AltFire") && (characterController.velocity != Vector3.zero) && characterController.isGrounded) {
             lookTarget = moveDirection+transform.position;
             lookTarget.y = transform.position.y;
+            
+            //var targetRotation = Quaternion.LookRotation(lookTarget);
+            //Quaternion.Lerp(transform.rotation, targetRotation, rotSpeed * Time.deltaTime);
             transform.LookAt(lookTarget);
+        } else {
+            //Cast a ray out from the camera where the mouse is
+            Ray mouseRay = Camera.main.ScreenPointToRay(Input.mousePosition);
+            //If it hits objects in the Layer (See start) within 200u
+            if(Physics.Raycast(mouseRay, out hit, 200, layer_mask)) {
+                //Get the point of the hit
+                lookTarget = hit.point;
+                //Ignore the Y of the point
+                lookTarget.y = transform.position.y;
+                //Look to the object
+                transform.LookAt(lookTarget);
+            }
         }
-        //transform.rotation = Quaternion.Euler(0, 0, 0);
+//ANIMATION
+        animator.SetFloat("speed", Mathf.Abs(moveDirection.x) + Mathf.Abs(moveDirection.z));
         
-        //lookDirection += new Vector3(0, Input.GetAxis("Mouse X"), 0) * rotSpeed;
-        //transform.rotation = Quaternion.Euler(lookDirection);
-        
-        //Gravity
-        moveDirection.y -= gravity * Time.deltaTime;
         
         //Apply Movement
         characterController.Move(moveDirection * Time.deltaTime);
