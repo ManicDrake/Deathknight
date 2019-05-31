@@ -21,8 +21,8 @@ public class charController : MonoBehaviour
     public bool sneaking = false;
 
     
-    private Vector3 moveDirection = Vector3.zero;
-    private Vector3 lookDirection;
+    private Vector3 moveDir;
+    private Quaternion lookDir;
     private RaycastHit hit;
     private Vector3 lookTarget;
     
@@ -30,29 +30,32 @@ public class charController : MonoBehaviour
 
     void Start()
     {
+        //Get our Controller Component
         characterController = GetComponent<CharacterController>();
-        //lookDirection = Vector3.zero;
+        //FInd our Lookat Layer
         layer_mask = LayerMask.GetMask("Void Floor");
     }
 
     void Update()
     {
 //MOVING
+        //Reset moveDir
+        moveDir = Vector3.zero;
         // IF character isGrounded allow input of Movement and jumping, ELSE apply gravity
         if (characterController.isGrounded)
         {
             //Get direction keys
-            moveDirection = new Vector3(Input.GetAxis("Horizontal"), 0.0f, Input.GetAxis("Vertical"));
+            moveDir = new Vector3(Input.GetAxis("Horizontal"), 0.0f, Input.GetAxis("Vertical"));
             //Apply Speed Factor
-            moveDirection *= speed;
+            moveDir *= speed;
             //Jump if on ground
             if (Input.GetButton("Jump"))
             {
-                moveDirection.y = jumpSpeed;
+                moveDir.y = jumpSpeed;
             }
         } else {
-            //Apply Gravity to movedirection
-            moveDirection.y -= gravity * Time.deltaTime;
+            //Apply Gravity to moveDir
+            moveDir.y -= gravity * Time.deltaTime;
         }
 
 //CROUCHING
@@ -71,16 +74,14 @@ public class charController : MonoBehaviour
 
 //ROTATION
         //REDO
+        //Refresh
+        lookTarget = transform.position;
         // Behaves such that look in direction as default
-        
         // If we are moving (Or other later determined triggers such as menus) Determine look from them
-        if(!Input.GetButton("AltFire") && (characterController.velocity != Vector3.zero) && characterController.isGrounded) {
-            lookTarget = moveDirection+transform.position;
+        if(!Input.GetButton("AltFire") && (moveDir != Vector3.zero) && characterController.isGrounded) {
+            //lookTarget.z += 1;
+            lookTarget += moveDir;
             lookTarget.y = transform.position.y;
-            
-            //var targetRotation = Quaternion.LookRotation(lookTarget);
-            //Quaternion.Lerp(transform.rotation, targetRotation, rotSpeed * Time.deltaTime);
-            transform.LookAt(lookTarget);
         } else {
             //Cast a ray out from the camera where the mouse is
             Ray mouseRay = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -90,15 +91,22 @@ public class charController : MonoBehaviour
                 lookTarget = hit.point;
                 //Ignore the Y of the point
                 lookTarget.y = transform.position.y;
-                //Look to the object
-                transform.LookAt(lookTarget);
+            } else {
+                Debug.Log("charControl: raycast miss");
             }
+            
         }
-//ANIMATION
-        animator.SetFloat("speed", Mathf.Abs(moveDirection.x) + Mathf.Abs(moveDirection.z));
+        lookDir = Quaternion.LookRotation(lookTarget - transform.position);
         
+
+        //transform.LookAt(lookTarget);
+
+//ANIMATION
+        //animator.SetFloat("speed", Mathf.Abs(moveDir.x) + Mathf.Abs(moveDir.z));
         
         //Apply Movement
-        characterController.Move(moveDirection * Time.deltaTime);
+        characterController.Move(moveDir * Time.deltaTime);
+        //Apply Rotation
+        transform.rotation = Quaternion.Lerp(transform.rotation, lookDir, Time.deltaTime * rotSpeed);
     }
 }
