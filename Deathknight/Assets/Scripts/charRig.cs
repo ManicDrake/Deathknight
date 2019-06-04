@@ -5,7 +5,7 @@ using UnityEngine;
 public class charRig : MonoBehaviour
 {
 //Variables
-    private Rigidbody charBody; private Transform body;    private Transform head;
+    private Rigidbody charBody; private Transform body, head;
     // public float distToGround;
 //Translate Variables
     public float tSpd = 6.0f;   private Vector3 tDir = Vector3.zero;
@@ -22,7 +22,7 @@ public class charRig : MonoBehaviour
 //functions
     private bool IsGrounded() {
         //distToGround + 0.1f
-        return Physics.Raycast(transform.position, -Vector3.up, 0.7f);
+        return Physics.Raycast(transform.position, -Vector3.up, 1.01f);
     }
     private void toggleCrouch() {
         if(crouch) {
@@ -51,7 +51,15 @@ public class charRig : MonoBehaviour
     void Update()
     {
     //Move
-        tDir = new Vector3(Input.GetAxisRaw("Horizontal")*tSpd, charBody.velocity.y, Input.GetAxisRaw("Vertical")*tSpd); //If Movement keys pressed change the translation Direction
+        if(IsGrounded()) {
+            tDir = new Vector3(Input.GetAxisRaw("Horizontal")*tSpd, charBody.velocity.y, Input.GetAxisRaw("Vertical")*tSpd); //If Movement keys pressed change the translation Direction
+        //JUmp
+            if(Input.GetButton("Jump")) { //If we press Jump while on hte ground, Jump
+                wantJump = true;     
+            }
+        } else {
+            tDir = charBody.velocity;
+        }
     //Look to Movement
         body.transform.LookAt(transform.position + new Vector3(tDir.x, 0.0f, tDir.z));
     //LookDir for light
@@ -67,17 +75,14 @@ public class charRig : MonoBehaviour
         }
         //Rotate the look of the character
         head.transform.rotation = Quaternion.Lerp(head.transform.rotation, rDir, Time.deltaTime * rSpd);
-    //JUmp
-        if(Input.GetButton("Jump") && IsGrounded()) { //If we press Jump while on hte ground, Jump
-            wantJump = true;     
-        }
+    
     }
     private void FixedUpdate() {
         //PHYSICS
         charBody.velocity = tDir;
         if (wantJump)
         {
-            charBody.AddForce(Vector3.up*jumpF, ForceMode.Impulse);
+            charBody.AddForce(Vector3.up*jumpF + (tDir*0.25f), ForceMode.Impulse);
             wantJump = false;
         }
     }
