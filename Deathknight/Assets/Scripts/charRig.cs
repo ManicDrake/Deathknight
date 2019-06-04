@@ -5,7 +5,7 @@ using UnityEngine;
 public class charRig : MonoBehaviour
 {
 //Variables
-    private Rigidbody charBody; private Transform body;    private Transform looking;
+    private Rigidbody charBody; private Transform body;    private Transform head;
     // public float distToGround;
 //Translate Variables
     public float tSpd = 6.0f;   private Vector3 tDir = Vector3.zero;
@@ -40,7 +40,7 @@ public class charRig : MonoBehaviour
     {
         //Collect Ourselves
         body = transform.GetChild(0); // TODO Find transforms by tag rather than assumption
-        looking = transform.GetChild(1);
+        head = transform.GetChild(1);
         charBody = GetComponent<Rigidbody>(); //Get the Rigidbody of the us we control\
 
         //Get Compoud Collider of child objects as distanceToGround distToGround = GetComponent<Collider>().bounds.extents.y;
@@ -66,7 +66,7 @@ public class charRig : MonoBehaviour
             toggleCrouch();
         }
         //Rotate the look of the character
-        looking.transform.rotation = Quaternion.Lerp(looking.transform.rotation, rDir, Time.deltaTime * rSpd);
+        head.transform.rotation = Quaternion.Lerp(head.transform.rotation, rDir, Time.deltaTime * rSpd);
     //JUmp
         if(Input.GetButton("Jump") && IsGrounded()) { //If we press Jump while on hte ground, Jump
             wantJump = true;     
